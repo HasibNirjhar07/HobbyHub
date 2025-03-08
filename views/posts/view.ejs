@@ -1,0 +1,795 @@
+<div class="container my-4">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <!-- Back to feed button -->
+      <a href="/feed" class="btn btn-outline-secondary mb-3">
+        <i class="fas fa-arrow-left"></i> Back to Feed
+      </a>
+
+      <!-- Post card -->
+      <div class="card shadow-sm mb-4">
+        <!-- Post header with user info -->
+        <div class="card-header bg-white d-flex align-items-center p-3">
+          <% if (post.user.profileImage) { %>
+          <img
+            src="<%= post.user.profileImage %>"
+            class="rounded-circle mr-2"
+            width="40"
+            height="40"
+            alt="Profile image"
+          />
+          <% } else { %>
+          <div
+            class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center mr-2"
+            style="width: 40px; height: 40px"
+          >
+            <i class="fas fa-user"></i>
+          </div>
+          <% } %>
+          <div>
+            <h6 class="mb-0"><%= post.user.username %></h6>
+            <small class="text-muted">
+              <%= new Date(post.createdAt).toLocaleString() %> <% if
+              (post.updatedAt > post.createdAt) { %> (edited) <% } %>
+            </small>
+          </div>
+        </div>
+
+        <!-- Post content -->
+        <div class="card-body">
+          <p class="card-text"><%= post.content %></p>
+
+          <!-- Media files -->
+          <% if (post.mediaFiles && post.mediaFiles.length > 0) { %>
+          <div class="media-container mb-3">
+            <% post.mediaFiles.forEach(media => { %> <% if (media.fileType ===
+            'image') { %>
+            <img
+              src="<%= media.filePath %>"
+              class="img-fluid rounded mb-2"
+              alt="<%= media.fileName %>"
+            />
+            <% } else if (media.fileType === 'video') { %>
+            <video controls class="img-fluid rounded mb-2">
+              <source src="<%= media.filePath %>" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <% } else if (media.fileType === 'audio') { %>
+            <audio controls class="w-100 mb-2">
+              <source src="<%= media.filePath %>" />
+              Your browser does not support the audio element.
+            </audio>
+            <% } %> <% }); %>
+          </div>
+          <% } %>
+
+          <!-- Post actions -->
+          <div class="d-flex mt-3">
+            <button
+              class="btn btn-sm mr-2 like-btn <%= locals.user && post.likes.includes(user._id) ? 'btn-primary' : 'btn-outline-primary' %>"
+              data-id="<%= post._id %>"
+            >
+              <i class="far fa-thumbs-up"></i>
+              <span class="like-count"><%= post.likes.length %></span>
+            </button>
+            <button
+              class="btn btn-sm mr-2 dislike-btn <%= locals.user && post.dislikes.includes(user._id) ? 'btn-danger' : 'btn-outline-danger' %>"
+              data-id="<%= post._id %>"
+            >
+              <i class="far fa-thumbs-down"></i>
+              <span class="dislike-count"><%= post.dislikes.length %></span>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary mr-2">
+              <i class="far fa-comment"></i>
+              <span class="comment-count"
+                ><%= post.comments ? post.comments.length : 0 %></span
+              >
+            </button>
+            <% if (locals.user && post.user._id.toString() ===
+            user._id.toString()) { %>
+            <div class="ml-auto">
+              <a
+                href="/posts/<%= post._id %>/edit"
+                class="btn btn-sm btn-outline-secondary mr-2"
+              >
+                <i class="fas fa-edit"></i> Edit
+              </a>
+              <button
+                class="btn btn-sm btn-outline-danger delete-post-btn"
+                data-id="<%= post._id %>"
+              >
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+<div class="comments-section mt-4">
+  <h4>Comments</h4>
+  
+  <!-- Comment form -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <form id="comment-form" class="comment-form">
+        <div class="form-group">
+          <textarea 
+            class="form-control" 
+            id="comment-content" 
+            rows="2" 
+            placeholder="Write a comment..."
+            required
+          ></textarea>
+        </div>
+        <input type="hidden" id="parent-comment-id" value="">
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <small id="reply-indicator" class="text-muted d-none">
+            Replying to <span id="reply-to-user"></span>
+            <button type="button" class="btn btn-sm btn-link p-0 ml-2" id="cancel-reply">Cancel</button>
+          </small>
+          <button type="submit" class="btn btn-primary">Post Comment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Comments loading indicator -->
+  <div id="comments-loading" class="text-center mb-3">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Loading comments...</span>
+    </div>
+  </div>
+
+  <!-- Comments container -->
+  <div id="comments-container">
+    <!-- Comments will be dynamically loaded here -->
+  </div>
+  
+  <!-- No comments message -->
+  <div id="no-comments-message" class="alert alert-light text-center d-none">
+    No comments yet. Be the first to comment!
+  </div>
+</div>
+
+<!-- Comment template (for JavaScript rendering) -->
+<template id="comment-template">
+  <div class="comment card mb-3" data-comment-id="">
+    <div class="card-body">
+      <div class="d-flex mb-2">
+        <div class="comment-user-photo mr-2">
+          <!-- User photo will be inserted here -->
+        </div>
+        <div>
+          <h6 class="comment-username mb-0"></h6>
+          <small class="text-muted comment-date"></small>
+        </div>
+        <div class="dropdown ml-auto">
+          <button class="btn btn-sm btn-link comment-options-toggle d-none" type="button" data-toggle="dropdown">
+            <i class="fas fa-ellipsis-v"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-right">
+            <button class="dropdown-item edit-comment-btn">Edit</button>
+            <button class="dropdown-item delete-comment-btn">Delete</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="comment-content mb-2"></div>
+      
+      <div class="comment-actions d-flex align-items-center">
+        <button class="btn btn-sm btn-outline-primary like-comment-btn mr-1">
+          <i class="fas fa-thumbs-up"></i> <span class="like-count">0</span>
+        </button>
+        <button class="btn btn-sm btn-outline-danger dislike-comment-btn mr-1">
+          <i class="fas fa-thumbs-down"></i> <span class="dislike-count">0</span>
+        </button>
+        <button class="btn btn-sm btn-outline-secondary reply-btn">
+          Reply
+        </button>
+      </div>
+    </div>
+    
+    <!-- Container for replies -->
+    <div class="replies-container pl-5 pr-3 pb-2">
+      <!-- Replies will be inserted here -->
+    </div>
+  </div>
+</template>
+
+<!-- Edit comment modal -->
+<div class="modal fade" id="edit-comment-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Comment</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-comment-form">
+          <input type="hidden" id="edit-comment-id">
+          <div class="form-group">
+            <textarea class="form-control" id="edit-comment-content" rows="3" required></textarea>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary mr-2" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Post handling scripts -->
+<script>
+  // Like/Dislike buttons event handlers
+  document.querySelectorAll(".like-btn").forEach((btn) => {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault()
+      const postId = this.getAttribute("data-id")
+
+      fetch(`/posts/${postId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(
+              `Server returned ${response.status}: ${response.statusText}`
+            )
+          }
+          return response.json()
+        })
+        .then((data) => {
+          updateButtonStates(postId, data)
+        })
+        .catch((error) => {
+          console.error("Error liking post:", error)
+          alert("Failed to like post. Please try again.")
+        })
+    })
+  })
+
+  document.querySelectorAll(".dislike-btn").forEach((btn) => {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault()
+      const postId = this.getAttribute("data-id")
+
+      fetch(`/posts/${postId}/dislike`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(
+              `Server returned ${response.status}: ${response.statusText}`
+            )
+          }
+          return response.json()
+        })
+        .then((data) => {
+          updateButtonStates(postId, data)
+        })
+        .catch((error) => {
+          console.error("Error disliking post:", error)
+          alert("Failed to dislike post. Please try again.")
+        })
+    })
+  })
+
+  // Delete post button
+  document.querySelectorAll(".delete-post-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      if (confirm("Are you sure you want to delete this post?")) {
+        const postId = this.getAttribute("data-id")
+
+        fetch(`/posts/${postId}`, {
+          method: "DELETE",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+          credentials: "same-origin",
+        })
+          .then((response) => {
+            if (!response.ok) {
+              if (response.status === 404) throw new Error("Post not found")
+              if (response.status === 401) throw new Error("Not authorized")
+              throw new Error("Server error")
+            }
+            return response.json()
+          })
+          .then((data) => {
+            if (data.success) {
+              window.location.href = "/feed"
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error)
+            alert("There was a problem deleting the post: " + error.message)
+          })
+      }
+    })
+  })
+
+  // Function to update button states
+  function updateButtonStates(postId, data) {
+    const likeBtn = document.querySelector(`.like-btn[data-id="${postId}"]`)
+    const dislikeBtn = document.querySelector(
+      `.dislike-btn[data-id="${postId}"]`
+    )
+
+    if (likeBtn) {
+      // Update like count
+      const likeCount = likeBtn.querySelector(".like-count")
+      if (likeCount) {
+        likeCount.textContent = data.likes
+      }
+
+      // Update like button appearance
+      if (data.userLiked) {
+        likeBtn.classList.remove("btn-outline-primary")
+        likeBtn.classList.add("btn-primary")
+      } else {
+        likeBtn.classList.remove("btn-primary")
+        likeBtn.classList.add("btn-outline-primary")
+      }
+    }
+
+    if (dislikeBtn) {
+      // Update dislike count
+      const dislikeCount = dislikeBtn.querySelector(".dislike-count")
+      if (dislikeCount) {
+        dislikeCount.textContent = data.dislikes
+      }
+
+      // Update dislike button appearance
+      if (data.userDisliked) {
+        dislikeBtn.classList.remove("btn-outline-danger")
+        dislikeBtn.classList.add("btn-danger")
+      } else {
+        dislikeBtn.classList.remove("btn-danger")
+        dislikeBtn.classList.add("btn-outline-danger")
+      }
+    }
+  }
+
+  // Add this JavaScript to your post view page
+document.addEventListener('DOMContentLoaded', function() {
+  const postId = window.location.pathname.split('/').pop();
+  const commentForm = document.getElementById('comment-form');
+  const commentsContainer = document.getElementById('comments-container');
+  const noCommentsMessage = document.getElementById('no-comments-message');
+  const commentsLoading = document.getElementById('comments-loading');
+  const commentTemplate = document.getElementById('comment-template');
+  const editCommentModal = document.getElementById('edit-comment-modal');
+  const editCommentForm = document.getElementById('edit-comment-form');
+  const editCommentId = document.getElementById('edit-comment-id');
+  const editCommentContent = document.getElementById('edit-comment-content');
+  const parentCommentId = document.getElementById('parent-comment-id');
+  const replyIndicator = document.getElementById('reply-indicator');
+  const replyToUser = document.getElementById('reply-to-user');
+  const cancelReply = document.getElementById('cancel-reply');
+  
+  // Load comments when the page loads
+  loadComments();
+  
+  // Handle comment form submission
+  commentForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const content = document.getElementById('comment-content').value.trim();
+    if (!content) return;
+    
+    addComment(content, parentCommentId.value);
+  });
+  
+  // Handle edit comment form submission
+  editCommentForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const content = editCommentContent.value.trim();
+    if (!content) return;
+    
+    updateComment(editCommentId.value, content);
+  });
+  
+  // Handle cancel reply button
+  cancelReply.addEventListener('click', function() {
+    resetReplyForm();
+  });
+  
+  // Load comments for the post
+  function loadComments() {
+    commentsLoading.classList.remove('d-none');
+    
+    fetch(`/posts/${postId}/comments`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to load comments');
+      }
+      return response.json();
+    })
+    .then(data => {
+      commentsLoading.classList.add('d-none');
+      
+      if (data.comments.length === 0) {
+        noCommentsMessage.classList.remove('d-none');
+      } else {
+        noCommentsMessage.classList.add('d-none');
+        renderComments(data.comments);
+      }
+    })
+    .catch(error => {
+      console.error('Error loading comments:', error);
+      commentsLoading.classList.add('d-none');
+      alert('Failed to load comments. Please refresh the page and try again.');
+    });
+  }
+  
+  // Render comments in the comments container
+  function renderComments(comments) {
+    commentsContainer.innerHTML = '';
+    
+    comments.forEach(comment => {
+      const commentElement = createCommentElement(comment);
+      commentsContainer.appendChild(commentElement);
+      
+      // Render replies if any
+      if (comment.replies && comment.replies.length > 0) {
+        const repliesContainer = commentElement.querySelector('.replies-container');
+        
+        comment.replies.forEach(reply => {
+          const replyElement = createCommentElement(reply, true);
+          repliesContainer.appendChild(replyElement);
+        });
+      }
+    });
+    
+    // Add event listeners to all comment action buttons
+    addCommentEventListeners();
+  }
+  
+  // Create a comment element from the template
+  function createCommentElement(comment, isReply = false) {
+    const commentElement = document.importNode(commentTemplate.content, true).querySelector('.comment');
+    
+    // Set comment ID
+    commentElement.setAttribute('data-comment-id', comment._id);
+    
+    // Set user photo
+    const userPhotoContainer = commentElement.querySelector('.comment-user-photo');
+    if (comment.user.photo) {
+      const img = document.createElement('img');
+      img.src = comment.user.photo;
+      img.alt = 'Profile';
+      img.className = 'rounded-circle';
+      img.style.width = '32px';
+      img.style.height = '32px';
+      img.style.objectFit = 'cover';
+      userPhotoContainer.appendChild(img);
+    } else {
+      const initials = document.createElement('div');
+      initials.className = 'rounded-circle bg-secondary d-flex align-items-center justify-content-center';
+      initials.style.width = '32px';
+      initials.style.height = '32px';
+      initials.style.color = 'white';
+      initials.textContent = (comment.user.displayName || comment.user.username).charAt(0);
+      userPhotoContainer.appendChild(initials);
+    }
+    
+    // Set username
+    commentElement.querySelector('.comment-username').textContent = comment.user.displayName || comment.user.username;
+    
+    // Set date
+    const date = new Date(comment.createdAt);
+    commentElement.querySelector('.comment-date').textContent = date.toLocaleString();
+    
+    // Set content
+    commentElement.querySelector('.comment-content').textContent = comment.content;
+    
+    // Set like and dislike counts
+    commentElement.querySelector('.like-count').textContent = comment.likes ? comment.likes.length : 0;
+    commentElement.querySelector('.dislike-count').textContent = comment.dislikes ? comment.dislikes.length : 0;
+    
+    // Check if the current user has liked/disliked
+    const currentUserId = window.user._id;
+    const userLiked = comment.likes && comment.likes.some(id => id === currentUserId);
+    const userDisliked = comment.dislikes && comment.dislikes.some(id => id === currentUserId);
+    
+    const likeBtn = commentElement.querySelector('.like-comment-btn');
+    const dislikeBtn = commentElement.querySelector('.dislike-comment-btn');
+    
+    if (userLiked) {
+      likeBtn.classList.remove('btn-outline-primary');
+      likeBtn.classList.add('btn-primary');
+    }
+    
+    if (userDisliked) {
+      dislikeBtn.classList.remove('btn-outline-danger');
+      dislikeBtn.classList.add('btn-danger');
+    }
+    
+    // Set options button visibility
+    if (comment.user._id === currentUserId) {
+      const optionsToggle = commentElement.querySelector('.comment-options-toggle');
+      optionsToggle.classList.remove('d-none');
+    }
+    
+    // If it's a reply, hide the replies container
+    if (isReply) {
+      commentElement.querySelector('.replies-container').remove();
+    }
+    
+    return commentElement;
+  }
+  
+  // Add event listeners to comment buttons
+  function addCommentEventListeners() {
+    // Like comment buttons
+    document.querySelectorAll('.like-comment-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const commentElement = this.closest('.comment');
+        const commentId = commentElement.getAttribute('data-comment-id');
+        likeComment(commentId, commentElement);
+      });
+    });
+    
+    // Dislike comment buttons
+    document.querySelectorAll('.dislike-comment-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const commentElement = this.closest('.comment');
+        const commentId = commentElement.getAttribute('data-comment-id');
+        dislikeComment(commentId, commentElement);
+      });
+    });
+    
+    // Reply buttons
+    document.querySelectorAll('.reply-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const commentElement = this.closest('.comment');
+        const commentId = commentElement.getAttribute('data-comment-id');
+        const username = commentElement.querySelector('.comment-username').textContent;
+        
+        // Set the parent comment ID
+        parentCommentId.value = commentId;
+        
+        // Show the reply indicator
+        replyToUser.textContent = username;
+        replyIndicator.classList.remove('d-none');
+        
+        // Focus the comment textarea
+        document.getElementById('comment-content').focus();
+        
+        // Scroll to the comment form
+        commentForm.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+    
+    // Edit comment buttons
+    document.querySelectorAll('.edit-comment-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const commentElement = this.closest('.comment');
+        const commentId = commentElement.getAttribute('data-comment-id');
+        const content = commentElement.querySelector('.comment-content').textContent;
+        
+        // Set the edit form values
+        editCommentId.value = commentId;
+        editCommentContent.value = content;
+        
+        // Show the edit modal
+        $(editCommentModal).modal('show');
+      });
+    });
+    
+    // Delete comment buttons
+    document.querySelectorAll('.delete-comment-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to delete this comment?')) {
+          const commentElement = this.closest('.comment');
+          const commentId = commentElement.getAttribute('data-comment-id');
+          deleteComment(commentId);
+        }
+      });
+    });
+  }
+  
+  // Add a new comment
+  function addComment(content, parentId = '') {
+    const comment = {
+      content: content,
+      parentComment: parentId || null
+    };
+    
+    fetch(`/posts/${postId}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(comment),
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to add comment');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Reset the form
+      document.getElementById('comment-content').value = '';
+      resetReplyForm();
+      
+      // Refresh comments
+      loadComments();
+    })
+    .catch(error => {
+      console.error('Error adding comment:', error);
+      alert('Failed to add comment. Please try again.');
+    });
+  }
+  
+  // Update a comment
+  function updateComment(commentId, content) {
+    fetch(`/posts/comments/${commentId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content }),
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to update comment');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Close the modal
+      $(editCommentModal).modal('hide');
+      
+      // Update the comment in the DOM
+      const commentElement = document.querySelector(`.comment[data-comment-id="${commentId}"]`);
+      if (commentElement) {
+        commentElement.querySelector('.comment-content').textContent = content;
+      }
+    })
+    .catch(error => {
+      console.error('Error updating comment:', error);
+      alert('Failed to update comment. Please try again.');
+    });
+  }
+  
+  // Delete a comment
+  function deleteComment(commentId) {
+    fetch(`/posts/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to delete comment');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Refresh comments
+      loadComments();
+    })
+    .catch(error => {
+      console.error('Error deleting comment:', error);
+      alert('Failed to delete comment. Please try again.');
+    });
+  }
+  
+  // Like a comment
+  function likeComment(commentId, commentElement) {
+    fetch(`/posts/comments/${commentId}/like`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to like comment');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Update like/dislike counts and button styles
+      updateCommentLikeUI(commentElement, data);
+    })
+    .catch(error => {
+      console.error('Error liking comment:', error);
+      alert('Failed to like comment. Please try again.');
+    });
+  }
+  
+  // Dislike a comment
+  function dislikeComment(commentId, commentElement) {
+    fetch(`/posts/comments/${commentId}/dislike`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to dislike comment');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Update like/dislike counts and button styles
+      updateCommentLikeUI(commentElement, data);
+    })
+    .catch(error => {
+      console.error('Error disliking comment:', error);
+      alert('Failed to dislike comment. Please try again.');
+    });
+  }
+  
+  // Update comment like/dislike UI
+  function updateCommentLikeUI(commentElement, data) {
+    const likeBtn = commentElement.querySelector('.like-comment-btn');
+    const dislikeBtn = commentElement.querySelector('.dislike-comment-btn');
+    const likeCount = commentElement.querySelector('.like-count');
+    const dislikeCount = commentElement.querySelector('.dislike-count');
+    
+    // Update counts
+    likeCount.textContent = data.likes;
+    dislikeCount.textContent = data.dislikes;
+    
+    // Update like button state
+    if (data.userLiked) {
+      likeBtn.classList.remove('btn-outline-primary');
+      likeBtn.classList.add('btn-primary');
+    } else {
+      likeBtn.classList.remove('btn-primary');
+      likeBtn.classList.add('btn-outline-primary');
+    }
+    
+    // Update dislike button state
+    if (data.userDisliked) {
+      dislikeBtn.classList.remove('btn-outline-danger');
+      dislikeBtn.classList.add('btn-danger');
+    } else {
+      dislikeBtn.classList.remove('btn-danger');
+      dislikeBtn.classList.add('btn-outline-danger');
+    }
+  }
+  
+  // Reset the reply form
+  function resetReplyForm() {
+    parentCommentId.value = '';
+    replyIndicator.classList.add('d-none');
+  }
+  
+  // Expose the currentUserId to window for use in templates
+  window.user = {
+    _id: '<%= user._id %>' // This will be rendered by EJS
+  };
+});
+</script>

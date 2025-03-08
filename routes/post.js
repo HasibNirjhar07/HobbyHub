@@ -110,4 +110,24 @@ router.post('/:id/dislike', ensureAuthenticated, (req, res) => {
 // Remove media from post - DELETE
 router.delete('/:postId/media/:fileName', ensureAuthenticated, postController.removeMedia);
 
+// Add these routes to your existing postRoutes.js file
+
+// Add a comment to a post
+router.post('/:id/comments', ensureAuthenticated, postController.addComment);
+
+// Get comments for a post
+router.get('/:id/comments', ensureAuthenticated, postController.getComments);
+
+// Update a comment
+router.put('/comments/:commentId', ensureAuthenticated, postController.updateComment);
+
+// Delete a comment
+router.delete('/comments/:commentId', ensureAuthenticated, postController.deleteComment);
+
+// Like a comment
+router.post('/comments/:commentId/like', ensureAuthenticated, postController.likeComment);
+
+// Dislike a comment
+router.post('/comments/:commentId/dislike', ensureAuthenticated, postController.dislikeComment);
+
 module.exports = router;

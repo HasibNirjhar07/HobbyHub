@@ -87,10 +87,12 @@ exports.loginUser = (req, res, next) => {
   })(req, res, next);
 };
 
-exports.logoutUser = (req, res) => {
-  req.logout();
-  req.flash('success_msg', 'You are logged out');
-  res.redirect('/login');
+exports.logoutUser = (req, res, next) => {
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    req.flash('success_msg', 'You are logged out');
+    res.redirect('/login');
+  });
 };
 // Google OAuth handlers
 exports.googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
