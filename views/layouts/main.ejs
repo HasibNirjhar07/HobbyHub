@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | HobbyHub</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+      <a class="navbar-brand" href="/feed">HobbyHub</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarMain">
+        <ul class="navbar-nav mr-auto">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/posts"><i class="fas fa-home"></i> Feed</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/posts/create"><i class="fas fa-plus-circle"></i> Create Post</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/users/search"><i class="fas fa-search"></i> Find Users</a>
+            </li>
+          <% } %>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
+                <img src="<%= user.photo ? user.photo : '/img/default-profile.png' %>" alt="Profile" class="nav-profile-img rounded-circle mr-1">
+                <%= user.username || user.displayName %>
+              </a>
+              <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item" href="/users/profile/<%= user._id %>"><i class="fas fa-user"></i> My Profile</a>
+                <a class="dropdown-item" href="/users/edit-profile"><i class="fas fa-cog"></i> Edit Profile</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="/auth/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+              </div>
+            </li>
+          <% } else { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/login"><i class="fas fa-sign-in-alt"></i> Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/register"><i class="fas fa-user-plus"></i> Register</a>
+            </li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+    <%- include('../partials/messages') %>
+    <%- body %>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-light text-center p-4 mt-5">
+    <div class="container">
+      <p class="mb-0">© 2025 Social Network. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS, Popper.js, and jQuery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+  <!-- Custom JS -->
+  <script src="/js/main.js"></script>
+</body>
+</html>

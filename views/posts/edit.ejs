@@ -1,0 +1,81 @@
+<div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">Edit Post</h4>
+        </div>
+        <div class="card-body">
+          <form action="/posts/edit/<%= post._id %>?_method=PUT" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="content">Content</label>
+              <textarea 
+                id="content" 
+                name="content" 
+                class="form-control" 
+                rows="4" 
+                required><%= post.content %></textarea>
+            </div>
+            
+            <% if (post.mediaFiles && post.mediaFiles.length > 0) { %>
+              <div class="card mb-3">
+                <div class="card-header">
+                  <h5 class="mb-0">Current Media</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <% post.mediaFiles.forEach(function(media) { %>
+                      <div class="col-md-4 mb-3 media-item-container" data-filename="<%= media.fileName %>">
+                        <div class="card h-100">
+                          <% if (media.fileType === 'image') { %>
+                            <img src="<%= media.filePath %>" class="card-img-top" style="height: 150px; object-fit: cover;">
+                          <% } else if (media.fileType === 'video') { %>
+                            <div class="card-body text-center">
+                              <i class="fas fa-video fa-3x text-info"></i>
+                            </div>
+                          <% } else if (media.fileType === 'audio') { %>
+                            <div class="card-body text-center">
+                              <i class="fas fa-volume-up fa-3x text-info"></i>
+                            </div>
+                          <% } %>
+                          <div class="card-footer">
+                            <button type="button" class="btn btn-sm btn-danger delete-media-btn">
+                              <i class="fas fa-trash"></i> Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+            
+            <div class="form-group">
+              <label for="media">Add Media (Optional)</label>
+              <div class="custom-file">
+                <input 
+                  type="file" 
+                  class="custom-file-input" 
+                  id="media" 
+                  name="media" 
+                  multiple 
+                  accept="image/*,video/*,audio/*">
+                <label class="custom-file-label" for="media">Choose files</label>
+              </div>
+              <small class="form-text text-muted">
+                You can upload up to 5 files (images, videos, or audio). Max 10MB each.
+              </small>
+            </div>
+  
+            <div id="media-preview" class="mb-3 row">
+              <!-- Preview will be shown here -->
+            </div>
+  
+            <button type="submit" class="btn btn-primary btn-block">
+              <i class="fas fa-paper-plane"></i> Update Post
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>

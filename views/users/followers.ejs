@@ -1,0 +1,35 @@
+<div class="row">
+    <div class="col-md-8 mx-auto">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4><%= user.displayName || user.username %>'s Followers</h4>
+          <a href="/users/profile/<%= user._id %>" class="btn btn-sm btn-outline-secondary">Back to Profile</a>
+        </div>
+        <div class="card-body">
+          <% if (followers.length === 0) { %>
+            <div class="alert alert-info">
+              <% if (user._id.toString() === locals.user._id.toString()) { %>
+                You don't have any followers yet.
+              <% } else { %>
+                <%= user.displayName || user.username %> doesn't have any followers yet.
+              <% } %>
+            </div>
+          <% } else { %>
+            <div class="list-group">
+              <% followers.forEach(follower => { %>
+                <a href="/users/profile/<%= follower._id %>" class="list-group-item list-group-item-action">
+                  <div class="d-flex align-items-center">
+                    <img src="<%= follower.photo ? follower.photo : '/img/default-profile.png' %>" alt="Profile Picture" class="rounded-circle mr-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    <div>
+                      <h6 class="mb-0"><%= follower.displayName || follower.username %></h6>
+                      <small class="text-muted">@<%= follower.username %></small>
+                    </div>
+                  </div>
+                </a>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>

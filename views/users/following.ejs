@@ -1,0 +1,35 @@
+<div class="row">
+    <div class="col-md-8 mx-auto">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4><%= user.displayName || user.username %>'s Following</h4>
+          <a href="/users/profile/<%= user._id %>" class="btn btn-sm btn-outline-secondary">Back to Profile</a>
+        </div>
+        <div class="card-body">
+          <% if (following.length === 0) { %>
+            <div class="alert alert-info">
+              <% if (user._id.toString() === locals.user._id.toString()) { %>
+                You aren't following anyone yet.
+              <% } else { %>
+                <%= user.displayName || user.username %> isn't following anyone yet.
+              <% } %>
+            </div>
+          <% } else { %>
+            <div class="list-group">
+              <% following.forEach(followedUser => { %>
+                <a href="/users/profile/<%= followedUser._id %>" class="list-group-item list-group-item-action">
+                  <div class="d-flex align-items-center">
+                    <img src="<%= followedUser.photo ? followedUser.photo : '/img/default-profile.png' %>" alt="Profile Picture" class="rounded-circle mr-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    <div>
+                      <h6 class="mb-0"><%= followedUser.displayName || followedUser.username %></h6>
+                      <small class="text-muted">@<%= followedUser.username %></small>
+                    </div>
+                  </div>
+                </a>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>

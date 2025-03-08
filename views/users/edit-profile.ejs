@@ -1,0 +1,38 @@
+<div class="row">
+    <div class="col-md-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h4>Edit Profile</h4>
+        </div>
+        <div class="card-body">
+          <form action="/users/edit-profile" method="POST" enctype="multipart/form-data">
+            <!-- Remove the hidden input for _method since we're using POST directly -->
+            
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" class="form-control" value="<%= user.username %>" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="bio">Bio</label>
+              <textarea id="bio" name="bio" class="form-control" rows="3"><%= user.bio || '' %></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="photo">Profile Picture</label>
+              <div class="mb-2">
+                <img src="<%= user.photo ? user.photo : '/img/default-profile.png' %>" alt="Current Profile Picture" class="img-fluid rounded-circle" style="max-width: 100px;">
+              </div>
+              <input type="file" id="photo" name="photo" class="form-control-file">
+              <small class="text-muted">Max size: 2MB. Accepted formats: JPEG, PNG, GIF</small>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+              <a href="/users/profile/<%= user._id %>" class="btn btn-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">Update Profile</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>

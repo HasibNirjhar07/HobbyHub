@@ -1,0 +1,325 @@
+
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <h1>Your Feed</h1>
+
+      <div class="mb-4">
+        <a href="/posts/create" class="btn btn-primary">Create New Post</a>
+      </div>
+
+      <% if (posts && posts.length > 0) { %> 
+        <% posts.forEach(post => { %>
+          <div class="card mb-4">
+            <div class="card-header">
+              <div class="d-flex align-items-center">
+                <% if (post.user.photo) { %>
+                  <img
+                    src="<%= post.user.photo %>"
+                    alt="Profile"
+                    class="rounded-circle mr-2"
+                    style="width: 40px; height: 40px; object-fit: cover"
+                  />
+                <% } else { %>
+                  <div
+                    class="rounded-circle bg-secondary mr-2 d-flex align-items-center justify-content-center"
+                    style="width: 40px; height: 40px; color: white"
+                  >
+                    <%= post.user.displayName ? post.user.displayName.charAt(0) : post.user.username.charAt(0) %>
+                  </div>
+                <% } %>
+                <div>
+                  <a
+                    href="/users/profile/<%= post.user._id %>"
+                    class="text-decoration-none"
+                  >
+                    <strong><%= post.user.displayName || post.user.username %></strong>
+                  </a>
+                  <small class="text-muted d-block">@<%= post.user.username %></small>
+                </div>
+                <small class="text-muted ml-auto">
+                  <%= new Date(post.createdAt).toLocaleString() %>
+                </small>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <p class="card-text"><%= post.content %></p>
+
+              <% if (post.mediaFiles && post.mediaFiles.length > 0) { %>
+                <div class="media-container">
+                  <% post.mediaFiles.forEach(media => { %> 
+                    <% if (media.fileType === 'image') { %>
+                      <img
+                        src="<%= media.filePath %>"
+                        alt="Post media"
+                        class="img-fluid mb-2"
+                      />
+                    <% } else if (media.fileType === 'video') { %>
+                      <video controls class="img-fluid mb-2">
+                        <source src="<%= media.filePath %>" type="video/mp4" />
+                        Your browser does not support the video tag.
+                      </video>
+                    <% } else if (media.fileType === 'audio') { %>
+                      <audio controls class="w-100 mb-2">
+                        <source src="<%= media.filePath %>" type="audio/mpeg" />
+                        Your browser does not support the audio tag.
+                      </audio>
+                    <% } %> 
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="card-footer">
+              <div class="d-flex">
+           <!-- Like Button -->
+<button
+class="btn btn-sm <%= post.likes && post.likes.some(like => like && like.toString() === user._id.toString()) ? 'btn-primary' : 'btn-outline-primary' %> like-btn mr-2"
+data-post-id="<%= post._id.toString() %>"
+data-user-liked="<%= post.likes && post.likes.some(like => like && like.toString() === user._id.toString()) %>"
+>
+<i class="fas fa-thumbs-up"></i>
+<span class="like-count"><%= post.likes ? post.likes.length : 0 %></span>
+</button>
+
+<!-- Dislike Button -->
+<button
+class="btn btn-sm <%= post.dislikes && post.dislikes.some(dislike => dislike && dislike.toString() === user._id.toString()) ? 'btn-danger' : 'btn-outline-danger' %> dislike-btn mr-2"
+data-post-id="<%= post._id.toString() %>"
+data-user-disliked="<%= post.dislikes && post.dislikes.some(dislike => dislike && dislike.toString() === user._id.toString()) %>"
+>
+<i class="fas fa-thumbs-down"></i>
+<span class="dislike-count"><%= post.dislikes ? post.dislikes.length : 0 %></span>
+</button>
+                <a
+                  href="/posts/<%= post._id %>"
+                  class="btn btn-sm btn-outline-secondary mr-2"
+                >
+                  <i class="fas fa-comment"></i> View Details
+                </a>
+                <% if (post.user._id.toString() === user._id.toString()) { %>
+                  <a
+                    href="/posts/edit/<%= post._id %>"
+                    class="btn btn-sm btn-outline-secondary mr-2"
+                  >
+                    <i class="fas fa-edit"></i> Edit
+                  </a>
+                  <button
+                    class="btn btn-sm btn-outline-danger delete-post-btn"
+                    data-post-id="<%= post._id %>"
+                  >
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }) %> 
+      <% } else { %>
+        <div class="alert alert-info">
+          <p>
+            No posts to display. Follow some users or create a post to see content
+            here!
+          </p>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Quick Links</h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <a href="/users/profile/<%= user._id %>">Your Profile</a>
+            </li>
+            <li class="list-group-item">
+              <a href="/users/edit-profile">Edit Profile</a>
+            </li>
+            <li class="list-group-item">
+              <a href="/users/search">Find Users</a>
+            </li>
+            <li class="list-group-item">
+              <a href="/users/<%= user._id %>/following">Following</a>
+            </li>
+            <li class="list-group-item">
+              <a href="/users/<%= user._id %>/followers">Followers</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Client-side JavaScript for handling likes and dislikes
+
+// Like functionality
+document.querySelectorAll(".like-btn").forEach((btn) => {
+  btn.addEventListener("click", function (event) {
+    event.preventDefault(); // Prevent any default behavior
+    
+    const postId = this.getAttribute("data-post-id");
+    console.log("Like button clicked for post ID:", postId);
+    
+    if (!postId || postId === "null" || postId === "undefined" || postId === "") {
+      console.error("Invalid post ID detected:", postId);
+      alert("Cannot process: Invalid post ID");
+      return;
+    }
+    
+    fetch(`/posts/${postId}/like`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: 'include'
+    })
+      .then(response => {
+        if (!response.ok) {
+          console.error("Server returned error status:", response.status);
+          return response.text().then(text => {
+            throw new Error(`Server error: ${text}`);
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log("Like operation successful:", data);
+        updateButtonStates(postId, data);
+      })
+      .catch(error => {
+        console.error("Error in like operation:", error);
+        alert("Failed to like post. Please try again.");
+      });
+  });
+});
+
+// Dislike functionality
+document.querySelectorAll(".dislike-btn").forEach((btn) => {
+  btn.addEventListener("click", function (event) {
+    event.preventDefault(); // Prevent any default behavior
+    
+    const postId = this.getAttribute("data-post-id");
+    console.log("Dislike button clicked for post ID:", postId);
+    
+    if (!postId || postId === "null" || postId === "undefined" || postId === "") {
+      console.error("Invalid post ID detected:", postId);
+      alert("Cannot process: Invalid post ID");
+      return;
+    }
+    
+    fetch(`/posts/${postId}/dislike`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: 'include'
+    })
+      .then(response => {
+        if (!response.ok) {
+          console.error("Server returned error status:", response.status);
+          return response.text().then(text => {
+            throw new Error(`Server error: ${text}`);
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log("Dislike operation successful:", data);
+        updateButtonStates(postId, data);
+      })
+      .catch(error => {
+        console.error("Error in dislike operation:", error);
+        alert("Failed to dislike post. Please try again.");
+      });
+  });
+});
+
+// Helper function to update button states
+function updateButtonStates(postId, data) {
+  console.log("Updating button states for post:", postId, "with data:", data);
+  
+  const likeBtn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
+  const dislikeBtn = document.querySelector(`.dislike-btn[data-post-id="${postId}"]`);
+
+  if (!likeBtn || !dislikeBtn) {
+    console.error("Could not find buttons for post:", postId);
+    return;
+  }
+
+  // Update counts
+  const likeCount = likeBtn.querySelector(".like-count");
+  const dislikeCount = dislikeBtn.querySelector(".dislike-count");
+  
+  if (likeCount) likeCount.textContent = data.likes;
+  if (dislikeCount) dislikeCount.textContent = data.dislikes;
+
+  // Update like button state
+  if (data.userLiked) {
+    likeBtn.classList.add("btn-primary");
+    likeBtn.classList.remove("btn-outline-primary");
+    likeBtn.setAttribute("data-user-liked", "true");
+  } else {
+    likeBtn.classList.remove("btn-primary");
+    likeBtn.classList.add("btn-outline-primary");
+    likeBtn.setAttribute("data-user-liked", "false");
+  }
+
+  // Update dislike button state
+  if (data.userDisliked) {
+    dislikeBtn.classList.add("btn-danger");
+    dislikeBtn.classList.remove("btn-outline-danger");
+    dislikeBtn.setAttribute("data-user-disliked", "true");
+  } else {
+    dislikeBtn.classList.remove("btn-danger");
+    dislikeBtn.classList.add("btn-outline-danger");
+    dislikeBtn.setAttribute("data-user-disliked", "false");
+  }
+  
+  console.log("Button states updated successfully");
+}
+  // Delete post functionality
+  document.querySelectorAll(".delete-post-btn").forEach((btn) => {
+    btn.addEventListener("click", function (event) {
+      event.preventDefault();
+      
+      if (confirm("Are you sure you want to delete this post?")) {
+        const postId = this.getAttribute("data-post-id");
+
+        fetch(`/posts/${postId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: 'include'
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            if (response.redirected) {
+              window.location.href = response.url;
+            } else {
+              // Remove the post from the DOM
+              const postCard = this.closest('.card');
+              if (postCard) {
+                postCard.remove();
+              } else {
+                window.location.reload();
+              }
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Failed to delete post. Please try again.");
+          });
+      }
+    });
+  });
+</script>
