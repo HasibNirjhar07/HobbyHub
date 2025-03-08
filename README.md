@@ -41,7 +41,7 @@ HobbyHub is a social platform designed for hobbyists to share their passions, co
    ```
 4. Start the server:
    ```sh
-   npm start
+   npm run dev
    ```
 
 ## Contributing
