@@ -24,7 +24,7 @@ HobbyHub is a social platform designed for hobbyists to share their passions, co
 ## Tools & Technologies
 - **Frontend**: EJS
 - **Backend**: Node.js with Express.js
-
+- **Database**: MongoDB
 ## Installation
 
 1. Clone the repository:
